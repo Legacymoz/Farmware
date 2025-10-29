@@ -1,0 +1,253 @@
+# ================================================================
+# FARMWARE DATABASE MANAGEMENT COMMANDS
+# Complete reference for all database operations
+# ===============================================# COMMON PATTERNS
+# ================================================================
+
+# RESET AND CREATE TEST DATA:
+python Server/populate_db.py clear-all
+python Server/populate_db.py create-sample-farmers
+python Server/populate_db.py create-sample-advisories
+python Server/populate_db.py status
+
+# VIEW ALL DATABASE CONTENT:
+python Server/populate_db.py show-all                 # Complete detailed view
+python Server/populate_db.py show-farmers             # Just farmers table
+python Server/populate_db.py show-advisories          # Just advisories table=========
+
+# ================================================================
+# 📊 DATABASE STATUS & HELP
+# ================================================================
+
+# Show help and all available commands
+python Server/populate_db.py
+
+# Check current database status (counts and lists all records)
+python Server/populate_db.py status
+
+
+# ================================================================
+# 👀 VIEW DATABASE CONTENTS
+# ================================================================
+
+# Show all data from all tables (complete detailed view)
+python Server/populate_db.py show-all
+
+# Show detailed farmers table data (with secret keys in different formats)
+python Server/populate_db.py show-farmers
+
+# Show detailed advisories table data (full messages)
+python Server/populate_db.py show-advisories
+
+# Show detailed farming advisories table data (delivery records)
+python Server/populate_db.py show-farming-advisories
+
+
+# ================================================================
+# 🗑️ CLEAR OPERATIONS
+# ================================================================
+
+# Clear entire database (all tables: farmers, advisories, farming_advisories)
+python Server/populate_db.py clear-all
+
+# Clear only farmers table (also removes related farming_advisory records)
+python Server/populate_db.py clear-farmers
+
+# Clear only advisories table (also removes related farming_advisory records)
+python Server/populate_db.py clear-advisories
+
+
+# ================================================================
+# 👨‍🌾 FARMER OPERATIONS
+# ================================================================
+
+# CREATE FARMERS:
+# ---------------
+
+# Create a single farmer (your main test farmer)
+python Server/populate_db.py create-farmer --phone '+254701016878' --secret-key 'FarmwareSecret2024'
+
+# Create another farmer with different credentials
+python Server/populate_db.py create-farmer --phone '+254723456789' --secret-key 'AnotherSecretKey123'
+
+# Create a third farmer
+python Server/populate_db.py create-farmer --phone '+254734567890' --secret-key 'ThirdFarmerKey456'
+
+# Create multiple sample farmers at once (3 farmers with predefined data)
+python Server/populate_db.py create-sample-farmers
+
+# DELETE FARMERS:
+# ---------------
+
+# Delete farmer with ID 1 (check status first to see which ID you want to delete)
+python Server/populate_db.py delete-farmer --id 1
+
+# Delete farmer with ID 2
+python Server/populate_db.py delete-farmer --id 2
+
+# Delete farmer with ID 3
+python Server/populate_db.py delete-farmer --id 3
+
+
+# ================================================================
+# 📢 ADVISORY OPERATIONS
+# ================================================================
+
+# CREATE ADVISORIES:
+# ------------------
+
+# Create a single advisory (weather alert)
+python Server/populate_db.py create-advisory --title 'Weather Alert: Heavy Rain Expected' --message 'Heavy rain is expected in your area today. Please take necessary precautions to protect your crops and livestock.'
+
+# Create a pest control advisory
+python Server/populate_db.py create-advisory --title 'Pest Control Advisory' --message 'Recent reports indicate increased pest activity. Inspect your crops regularly and apply appropriate control measures.'
+
+# Create a market price update
+python Server/populate_db.py create-advisory --title 'Market Price Update' --message 'Current market prices: Maize - KES 45/kg, Beans - KES 120/kg, Tomatoes - KES 80/kg. Plan your sales accordingly.'
+
+# Create multiple sample advisories at once (4 advisories with predefined content)
+python Server/populate_db.py create-sample-advisories
+
+# DELETE ADVISORIES:
+# ------------------
+
+# Delete advisory with ID 1 (check status first to see which ID you want to delete)
+python Server/populate_db.py delete-advisory --id 1
+
+# Delete advisory with ID 2
+python Server/populate_db.py delete-advisory --id 2
+
+# Delete advisory with ID 3
+python Server/populate_db.py delete-advisory --id 3
+
+
+# ================================================================
+# 🚀 COMPLETE WORKFLOW EXAMPLES
+# ================================================================
+
+# SETUP FOR API TESTING (RECOMMENDED):
+# ------------------------------------
+
+# Step 1: Clear everything to start fresh
+python Server/populate_db.py clear-all
+
+# Step 2: Create your main test farmer (matches your Postman test)
+python Server/populate_db.py create-farmer --phone '+254712345678' --secret-key 'FarmwareSecret2024'
+
+# Step 3: Create a test advisory
+python Server/populate_db.py create-advisory --title 'Weather Alert: Heavy Rain Expected' --message 'Full weather advisory message content for testing the complete flow from SMS to USSD verification.'
+
+# Step 4: Check what was created (should show 1 farmer, 1 advisory)
+python Server/populate_db.py status
+
+# CREATE FULL SAMPLE DATABASE:
+# ----------------------------
+
+# Step 1: Clear everything
+python Server/populate_db.py clear-all
+
+# Step 2: Create sample farmers (creates 3 farmers)
+python Server/populate_db.py create-sample-farmers
+
+# Step 3: Create sample advisories (creates 4 advisories)
+python Server/populate_db.py create-sample-advisories
+
+# Step 4: Check everything was created
+python Server/populate_db.py status
+
+# TARGETED RECORD MANAGEMENT:
+# ---------------------------
+
+# Step 1: Check current status
+python Server/populate_db.py status
+
+# Step 2: Add specific records
+python Server/populate_db.py create-farmer --phone '+254700111222' --secret-key 'CustomKey2024'
+python Server/populate_db.py create-advisory --title 'Urgent: Drought Warning' --message 'Immediate water conservation required.'
+
+# Step 3: Check new status (note the new IDs)
+python Server/populate_db.py status
+
+# Step 4: Delete specific records by their ID (use IDs from status output)
+python Server/populate_db.py delete-farmer --id 4
+python Server/populate_db.py delete-advisory --id 5
+
+# Step 5: Verify deletion
+python Server/populate_db.py status
+
+# QUICK RESET AND SETUP:
+# ----------------------
+
+# One-liner setup for testing (run these in sequence)
+python Server/populate_db.py clear-all && python Server/populate_db.py create-farmer --phone '+254712345678' --secret-key 'FarmwareSecret2024' && python Server/populate_db.py create-sample-advisories && python Server/populate_db.py status
+
+
+# ================================================================
+# 💡 IMPORTANT NOTES
+# ================================================================
+
+# Always check status before and after operations to see IDs
+python Server/populate_db.py status
+
+# IDs are auto-generated, so use status to see what IDs exist before deleting
+# Example workflow:
+python Server/populate_db.py status                    # See current IDs
+python Server/populate_db.py delete-farmer --id 2     # Delete specific ID
+python Server/populate_db.py status                    # Confirm deletion
+
+
+# ================================================================
+# 🎯 FOR YOUR API TESTING
+# ================================================================
+
+# MINIMAL SETUP FOR POSTMAN TESTS:
+# --------------------------------
+
+python Server/populate_db.py clear-all
+python Server/populate_db.py create-farmer --phone '+254712345678' --secret-key 'FarmwareSecret2024'
+python Server/populate_db.py create-advisory --title 'Weather Alert: Heavy Rain Expected' --message 'Heavy rain expected today. Protect crops and livestock. Secure outdoor equipment and ensure proper drainage.'
+python Server/populate_db.py status
+
+# This creates:
+# - Farmer ID: 1, Phone: +254712345678, Secret: FarmwareSecret2024
+# - Advisory ID: 1, Title: Weather Alert: Heavy Rain Expected
+# Perfect for testing your APIs with message_id: "1"
+
+
+# ================================================================
+# 🔄 COMMON PATTERNS
+# ================================================================
+
+# RESET AND CREATE TEST DATA:
+python Server/populate_db.py clear-all
+python Server/populate_db.py create-sample-farmers
+python Server/populate_db.py create-sample-advisories
+python Server/populate_db.py status
+
+# CREATE SINGLE TEST RECORDS:
+python Server/populate_db.py create-farmer --phone '+254700000001' --secret-key 'TestKey001'
+python Server/populate_db.py create-advisory --title 'Test Advisory' --message 'This is a test advisory message.'
+
+# CLEANUP SPECIFIC RECORDS:
+python Server/populate_db.py status                    # Note the IDs you want to delete
+python Server/populate_db.py delete-farmer --id X     # Replace X with actual ID
+python Server/populate_db.py delete-advisory --id Y   # Replace Y with actual ID
+python Server/populate_db.py status                    # Verify deletion
+
+
+# ================================================================
+# 📋 QUICK REFERENCE
+# ================================================================
+
+# Most used commands:
+python Server/populate_db.py                          # Help
+python Server/populate_db.py status                   # Status (counts only)
+python Server/populate_db.py show-all                 # Full data view
+python Server/populate_db.py clear-all                # Clear all
+python Server/populate_db.py create-sample-farmers    # Sample farmers
+python Server/populate_db.py create-sample-advisories # Sample advisories
+python Server/populate_db.py show-farmers             # Detailed farmers view
+
+# ================================================================
+# END OF COMMANDS REFERENCE
+# ================================================================

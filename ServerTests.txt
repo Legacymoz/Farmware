@@ -1,0 +1,161 @@
+Test 1: Send Advisory Endpoint (/send-advisory)
+
+Method: POST
+URL: http://localhost:5000/send-advisory
+Headers : Content-Type: application/json
+
+{
+    "message_id": "12345",
+    "title": "Weather Alert: Heavy Rain Expected",
+    "farmer_id": "101",
+    "secret_key": "FarmwareSecret2024",
+    "phone_number": "+254712345678"
+}
+
+Expected Response
+{
+    "success": true,
+    "message": "Advisory processed and SMS sent successfully",
+    "verification_code": "648057",
+    "farmer_id": "101",
+    "phone_number": "+254712345678",
+    "sms_content": "Weather Alert: Heavy Rain Expected, 648057 *DEFAULT_USSD*648057#",
+    "sms_status": "sent"
+}
+Actual Response:
+{
+    "farmer_id": "101",
+    "message": "Advisory processed and SMS sent successfully",
+    "phone_number": "+254712345678",
+    "sms_content": "Weather Alert: Heavy Rain Expected, 648057 *123*648057#",
+    "sms_status": "sent",
+    "success": true,
+    "verification_code": "648057"
+}
+
+
+
+
+
+
+Test 2: Verify Advisory Endpoint (/verify-advisory)
+
+Method: POST
+URL: http://localhost:5000/verify-advisory
+Headers: Content-Type: application/json
+
+{
+    "phone_number": "+254712345678",
+    "service_code": "*123*648057#",
+    "session_id": "session_123456"
+}
+
+Expected Response
+{
+    "success": true,
+    "message": "Full advisory verified and sent successfully",
+    "phone_number": "+254712345678",
+    "verification_code": "648057",
+    "advisory_content": "Full advisory message content here...",
+    "sms_status": "sent"
+}
+
+Actual Response:
+
+{
+    "advisory_content": "FULL ADVISORY CONTENT: Weather Alert - Heavy rain expected in your area today. Please take necessary precautions. Secure your crops and livestock. Advisory ID: 12345",
+    "message": "Full advisory verified and sent successfully",
+    "phone_number": "+254712345678",
+    "sms_status": "sent",
+    "success": true,
+    "verification_code": "648057"
+}
+
+
+
+Test 3: USSD Callback Endpoint (/ussd-callback)
+
+Method: POST
+URL: http://localhost:5000/ussd-callback
+Headers: Content-Type: application/json
+
+Body (Form Data):
+sessionId: ATUid_session_123456
+serviceCode: *123*648057#
+phoneNumber: +254712345678
+
+Expected Response:
+END Thank you! You will receive your full message shortly.
+
+Actual Response:
+END Thank you! You will receive your full message shortly.
+
+
+
+
+Test 4: Send Advisory Endpoint (/send-advisory)
+
+Method: POST
+URL: http://localhost:5000/send-advisory
+Headers : Content-Type: application/json
+
+{
+    "message_id": "1",
+    "title": "Weather Alert: Heavy Rain Expected",
+    "farmer_id": "1",
+    "secret_key": "FarmwareSecret2024",
+    "phone_number": "+254701016878"
+}
+
+Actual Response:
+{
+    "farmer_id": "1",
+    "message": "Advisory processed and SMS sent successfully",
+    "phone_number": "+254701016878",
+    "sms_content": "Weather Alert: Heavy Rain Expected, 560650 *123*560650#",
+    "sms_status": "sent",
+    "success": true,
+    "verification_code": "560650"
+}
+
+Test 5: USSD Callback Endpoint (/ussd-callback)
+
+Method: POST
+URL: http://localhost:5000/ussd-callback
+Headers: Content-Type: application/json
+
+Body (Form Data):
+sessionId: ATUid_session_123456
+serviceCode: *123*560650#
+phoneNumber: +254701016878
+
+Expected Response:
+END Thank you! You will receive your full message shortly.
+
+Actual Response:
+END Thank you! You will receive your full message shortly.
+
+
+
+
+Test 6: Verify Advisory Endpoint (/verify-advisory)
+
+Method: POST
+URL: http://localhost:5000/verify-advisory
+Headers: Content-Type: application/json
+
+{
+    "phone_number": "254701016878",
+    "service_code": "*123*560560#",
+    "session_id": "session_123456"
+}
+
+Expected Response
+{
+    "success": true,
+    "message": "Full advisory verified and sent successfully",
+    "phone_number": "+254712345678",
+    "verification_code": "648057",
+    "advisory_content": "Full advisory message content here...",
+    "sms_status": "sent"
+}

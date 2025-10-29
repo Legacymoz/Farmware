@@ -14,8 +14,8 @@ class Farmer(db.Model):
     # Phone number - Unique and required
     phone = db.Column(db.String(20), unique=True, nullable=False, index=True)
     
-    # Secret key for authentication
-    secret_key = db.Column(db.String(255), nullable=False)
+        # Secret key for authentication (stored as binary data)
+    secret_key = db.Column(db.LargeBinary, nullable=False)
     
     # Metadata fields (good practice)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

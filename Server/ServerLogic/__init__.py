@@ -11,9 +11,6 @@ from flask_migrate import Migrate
 db = SQLAlchemy()
 migrate = Migrate()
 
-# Import models so they're registered with SQLAlchemy
-from ServerLogic import models
-
 
 def create_app():
     """
@@ -35,6 +32,13 @@ def create_app():
     'postgresql://mozart:farmware2025@localhost:5432/farmware_db'
     )
 
+    # Validate critical environment variables
+    required_env_vars = ['USSD_CODE', 'SMC_API_KEY']
+    missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
+    if missing_vars:
+        print(f"⚠️  Warning: Missing environment variables: {missing_vars}")
+    
+
     
     # Enable CORS for all routes
     CORS(app)
@@ -43,6 +47,14 @@ def create_app():
     # Initialize extensions with app
     db.init_app(app)
     migrate.init_app(app, db)
+    
+    # Import models so they're registered with SQLAlchemy
+    from ServerLogic import models
+    
+    # Register blueprints
+    from ServerLogic.routes import routes_bp
+    app.register_blueprint(routes_bp)
+    
     #Test database connection
     try:
         # This will test if we can connect to the database

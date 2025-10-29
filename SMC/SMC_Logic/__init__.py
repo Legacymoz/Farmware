@@ -7,6 +7,7 @@ from flask_cors import CORS
 import os
 
 
+
 def create_app():
     """
     Application factory function that creates and configures the SMC Flask app.
@@ -23,5 +24,9 @@ def create_app():
     
     # Enable CORS for all routes
     CORS(app)
+
+    # Register blueprints
+    from SMC_Logic.routes import smc_routes_bp
+    app.register_blueprint(smc_routes_bp)
     
     return app
