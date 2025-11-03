@@ -2,6 +2,7 @@ from flask import request, Blueprint
 from .SMS.utils import process_complete_advisory
 from .USSD.utils import verify_full_message
 import os
+from flask import current_app
 
 routes_bp = Blueprint('routes', __name__)
 
@@ -55,21 +56,23 @@ def verify_advisory():
     Extracts VC and handles verification logic.
     """
     try:
+        # print("Received request to /verify-advisory")
         data = request.get_json()
+        # print("Request data:", data)
         
         # Extract required fields
         phone_number = data.get('phone_number')
         service_code = data.get('service_code')  # Will extract VC from here
-        session_id = data.get('session_id', '')
+        text = data.get('text', '')
         
         # Basic validation
-        if not all([phone_number, service_code]):
+        if not all([phone_number, service_code, text]):
             return {
                 'error': 'Missing required fields',
-                'required': ['phone_number', 'service_code']
+                'required': ['phone_number', 'service_code', 'text']
             }, 400
         
-        response = verify_full_message(phone_number, service_code)
+        response = verify_full_message(phone_number, service_code, text)
         
         # Return the actual response from verify_full_message
         if response.get('success'):
@@ -92,27 +95,66 @@ def ussd_callback():
     This ensures the user gets immediate feedback while the verification happens in the background.
     """
     try:
+        # print("Received USSD callback request")
         data = request.form
+        
         
         session_id = data.get('sessionId')
         service_code = data.get('serviceCode')
         phone_number = data.get('phoneNumber')
+        text= data.get('text', '')
+
         
         if not all([session_id, service_code, phone_number]):
             return "END Sorry, invalid request parameters.", 200
         
         # Start background verification task
         import threading
-        
+        import requests
+        # print("Received USSD callback request, just out side the thread")
         def background_verification():
             """Background task to handle verification without blocking USSD response"""
+
+            # print("Inside background verification thread, but before try block")
             try:
-                # Process verification in background
-                response = verify_full_message(phone_number, service_code)
-                if response.get('success'):
+                # print("before Importing current_app")
+                from flask import current_app
+                # print("After Importing current_app")
+                
+                # Get the base URL for internal API calls
+                base_url =  'http://localhost:5000'
+                # print("After getting base_url")
+                
+                # Prepare payload for /verify-advisory endpoint
+                payload = {
+                    'phone_number': phone_number,
+                    'service_code': service_code,
+                    'session_id': session_id,
+                    'text': text
+
+                }
+                # print("About to call /verify-advisory endpoint with payload:")
+                
+                # Call the /verify-advisory API internally
+                response = requests.post(
+                    f"{base_url}/verify-advisory",
+                    json=payload,
+                    headers={'Content-Type': 'application/json'},
+                    timeout=30  # 30 second timeout
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
                     print(f"✅ Background verification successful for {phone_number}")
+                    print(f"📄 Response: {result}")
                 else:
-                    print(f"❌ Background verification failed: {response.get('error')}")
+                    print(f"❌ Background verification failed with status {response.status_code}")
+                    print(f"📄 Error: {response.text}")
+                    
+            except requests.exceptions.Timeout:
+                print(f"⏰ Background verification timed out for {phone_number}")
+            except requests.exceptions.ConnectionError:
+                print(f"🔌 Connection error during background verification for {phone_number}")
             except Exception as e:
                 print(f"❌ Error in background verification: {e}")
         

@@ -10,12 +10,17 @@ from .. import db
 load_dotenv()
 
 
-def verify_full_message(phone_number, service_code):
+def verify_full_message(phone_number, service_code, text):
     """
     Main Function that controls the whole advisory verification flow.
     """
     # Step 1: Extract VC from service_code
-    VC = extract_vc_from_service_code(service_code)
+    if text =='':
+        VC = extract_vc_from_service_code(service_code)
+    else:
+        VC = text
+    
+    print(f"🔍 Extracted VC: {VC}")
     
     #Step 2, Get the secret Key matching that Phone number from DB
     secret_key = get_secret_key_by_phone(phone_number)
@@ -63,6 +68,7 @@ def extract_vc_from_service_code(service_code):
         parts = service_code.split('*')
         if len(parts) < 2:
             return None
+        print("Parts after split:", parts)
         last_part = parts[-1]
         vc = last_part.split('#')[0]
         return vc
@@ -99,25 +105,56 @@ def send_vc_to_smc(secret_key, vc):
         
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {os.getenv('SMC_API_KEY')}"
+            "Authorization": f"Bearer {os.getenv('SMC_API_KEY')}" 
+            
         }
+        print("")
+        # DEBUG: Print what we're sending
+        print(f"🔍 SMC Request Debug:")
+        print(f"   URL: {smc_url}")
+        print(f"   VC: '{vc}' (type: {type(vc)})")
+        print(f"   Secret Key: '{secret_key_str}' (type: {type(secret_key_str)})")
+        print(f"   API Key: '{os.getenv('SMC_API_KEY')}'")
+        print(f"   Payload: {payload}")
+        
         
         # Send POST request to SMC
         response = requests.post(
             smc_url, 
             json=payload, 
             headers=headers,
-            timeout=30
+            
         )
+        # ADD THIS DEBUG OUTPUT
+        print(f"📄 SMC Response Debug:")
+        print(f"   Status Code: {response.status_code}")
+        print(f"   Response Headers: {dict(response.headers)}")
+        print(f"   Response Text: '{response.text}'")
+
+        #Check for non-200 status codes BEFORE raise_for_status()
+        if response.status_code != 200:
+            print(f"❌ SMC returned non-200 status: {response.status_code}")
+            print(f"   Response body: {response.text}")
+            return None
+
         
-        response.raise_for_status()
+        
         return response.json()
         
+    # except requests.exceptions.RequestException as e:
+    #     print(f"Error sending to SMC: {e}")
+    #     return None
+    # except Exception as e:
+    #     print(f"Unexpected error: {e}")
+    #     return None
     except requests.exceptions.RequestException as e:
-        print(f"Error sending to SMC: {e}")
+        print(f"❌ Error sending to SMC: {e}")
+        if hasattr(e, 'response') and e.response:
+            print(f"   Error Status: {e.response.status_code}")
+            print(f"   Error Response: {e.response.text}")
         return None
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print(f"❌ Unexpected error: {e}")
         return None
 
 
@@ -134,16 +171,19 @@ def get_secret_key_by_phone(phone_number):
     try:
         print(f"🔍 Looking up secret key for phone: {phone_number}")
         
-        # Query the database for farmer with matching phone number
-        farmer = Farmer.query.filter_by(phone=phone_number).first()
-            
-        if farmer:
-            print(f"✅ Found farmer: {farmer.id} with secret key")
-            # Return as bytes (from LargeBinary column)
-            return farmer.secret_key  # This should be bytes from database
-        else:
-            print(f"❌ No farmer found for phone: {phone_number}")
-            return None
+        # Ensure we have application context
+        with current_app.app_context():
+            # Query the database for farmer with matching phone number
+            farmer = Farmer.query.filter_by(phone=phone_number).first()
+                
+            if farmer:
+                print(f"✅ Found farmer: {farmer.id} with secret key")
+                # Return as bytes (from LargeBinary column)
+                return farmer.secret_key  # This should be bytes from database
+            else:
+                print(f"❌ No farmer found for phone: {phone_number}")
+                return None
+                    
                 
     except Exception as e:
         print(f"Error getting secret key: {str(e)}")
@@ -165,21 +205,24 @@ def get_full_advisory_by_message_id(message_id):
     try:
         print(f"📄 Looking up full advisory for message ID: {message_id}")
         
-        # Query the database for advisory with matching ID
-        try:
-            advisory_id = int(message_id)  # Convert to int if message_id is advisory ID
-            advisory = Advisory.query.get(advisory_id)
-        except ValueError:
-            # If message_id is not an integer, try searching by title
-            advisory = Advisory.query.filter_by(title=message_id).first()
-        
-        if advisory:
-            print(f"✅ Found advisory: {advisory.title}")
-            # Return only the message content
-            return advisory.message
-        else:
-            print(f"❌ No advisory found for message ID: {message_id}")
-            return None
+        # Ensure we have application context
+        with current_app.app_context():
+            # Query the database for advisory with matching ID
+            try:
+                advisory_id = int(message_id)  # Convert to int if message_id is advisory ID
+                advisory = Advisory.query.get(advisory_id)
+            except ValueError:
+                # If message_id is not an integer, try searching by title
+                advisory = Advisory.query.filter_by(title=message_id).first()
+            
+            if advisory:
+                print(f"✅ Found advisory: {advisory.title}")
+                # Return only the message content
+                return advisory.message
+            else:
+                print(f"❌ No advisory found for message ID: {message_id}")
+                return None
+                
             
     except Exception as e:
         print(f"Error getting advisory content: {str(e)}")

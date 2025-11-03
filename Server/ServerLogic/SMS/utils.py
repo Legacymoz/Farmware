@@ -1,9 +1,22 @@
 import requests
 import os
 from dotenv import load_dotenv
+from .sms_service import SMSService
+from .sms_service import send_sms_celcom
+import os
 
 # Load environment variables
 load_dotenv()
+
+
+
+# Initialize once
+sms_client = SMSService(
+    username=os.getenv("AFRICASTALKING_USERNAME", "sandbox"),
+    api_key=os.getenv("AFRICASTALKING_API_KEY")
+)
+
+
 
 def process_complete_advisory(message_id, title, secret_key, farmer_id, phone_number):
     """
@@ -168,16 +181,25 @@ def send_sms_to_farmer(phone_number, sms_message):
         print(f"   📞 Phone: {phone_number}")
         print(f"   💬 Message: {sms_message}")
         print(f"   ✅ SMS sent successfully (dummy)")
+
+        # # ADD THESE DEBUG PRINTS
+        # print("🔍 Checking Africa's Talking Credentials:")
+        # print(f"   Username: '{os.getenv('AFRICASTALKING_USERNAME', 'sandbox')}'")
+        # print(f"   API Key: '{os.getenv('AFRICASTALKING_API_KEY')}'")
+        # print(f"   API Key length: {len(os.getenv('AFRICASTALKING_API_KEY', '')) if os.getenv('AFRICASTALKING_API_KEY') else 0}")
+
         
-        # TODO: Replace with actual Africa's Talking API call
-        # Example future implementation:
-        # import africastalking
-        # africastalking.initialize(
-        #     username=os.getenv('AFRICASTALKING_USERNAME'),
-        #     api_key=os.getenv('AFRICASTALKING_API_KEY')
+        # print(f"📨 Sending SMS to {phone_number}...")
+
+        # response = sms_client.send_sms(
+        #     phone_number,
+        #     sms_message,
+        #     sender="12594"
         # )
-        # sms = africastalking.SMS
-        # response = sms.send(sms_message, [phone_number])
+
+
+        result = send_sms_celcom(phone_number, sms_message)
+        print("✅ SMS sent:", result)
         
         return {
             'success': True,
