@@ -18,7 +18,7 @@ sms_client = SMSService(
 
 
 
-def process_complete_advisory(message_id, title, secret_key, farmer_id, phone_number):
+def process_complete_advisory(message_id, phone_number):
     """
     MAIN ORCHESTRATOR FUNCTION - Handles the complete advisory workflow.
     This is the only function that should be called from routes.
@@ -34,8 +34,46 @@ def process_complete_advisory(message_id, title, secret_key, farmer_id, phone_nu
         dict: Complete response with success/failure and all details
     """
     try:
-        print(f"Processing advisory {message_id} for farmer {farmer_id}")
         
+
+        # Step 0A: Get farmer ID from database using phone number
+        farmer_success, farmer_result = get_farmer_id(phone_number)
+        if not farmer_success:
+            return {
+                'success': False,
+                'error': farmer_result,
+                'step': 'FARMER_LOOKUP'
+            }
+        
+        farmer_id = farmer_result
+        print(f"✅ Found farmer ID: {farmer_id}")
+        
+        # Step 0B: Get secret key from database using phone number
+        from ..USSD.utils import get_secret_key_by_phone
+        
+        secret_key = get_secret_key_by_phone(phone_number)
+        if not secret_key:
+            return {
+                'success': False,
+                'error': f'No secret key found for phone number: {phone_number}',
+                'step': 'SECRET_KEY_LOOKUP'
+            }
+        
+        print(f"✅ Found farmer with secret key")
+        
+        # Step 0C: Get advisory title from database
+        advisory_success, advisory_result = get_advisory_title(message_id)
+        if not advisory_success:
+            return {
+                'success': False,
+                'error': advisory_result,
+                'step': 'ADVISORY_LOOKUP'
+            }
+        
+        title = advisory_result
+        print(f"✅ Found advisory title: {title}")
+        
+
         # Step 1: Send to SMC
         smc_response = send_to_smc(message_id, secret_key)
         if smc_response is None:
@@ -158,7 +196,11 @@ def craft_sms(title, vc):
     ussd_code = os.getenv('USSD_CODE', 'DEFAULT_USSD')
     
     # Format: Title, VC, then USSD code with VC
-    sms_message = f"{title}, {vc} {ussd_code}{vc}#"
+    sms_message = (
+    f"{title},\n"
+    f"This is your verification code: {vc}\n"
+    f"Dial {ussd_code}{vc}# to verify."
+)
     
     return sms_message
 
@@ -215,4 +257,75 @@ def send_sms_to_farmer(phone_number, sms_message):
             'error': f'Failed to send SMS: {str(e)}',
             'phone_number': phone_number
         }
+
+def get_advisory_title(message_id):
+    """
+    Get advisory title from database using message ID.
+    
+    Args:
+        message_id (str): Advisory message ID
+        
+    Returns:
+        tuple: (success, title_or_error)
+            - If success: (True, "Advisory Title")
+            - If failure: (False, "Error message")
+    """
+    try:
+        from ..models import Advisory
+        from flask import current_app
+        
+        print(f"🔍 Looking up advisory title for message ID: {message_id}")
+        
+        with current_app.app_context():
+            # Try to convert message_id to integer
+            try:
+                advisory_id = int(message_id)
+            except ValueError:
+                return False, f"Invalid message_id format: {message_id} (must be integer)"
+            
+            # Query the database for advisory
+            advisory = Advisory.query.get(advisory_id)
+            
+            if not advisory:
+                return False, f"No advisory found with ID: {message_id}"
+            
+            print(f"✅ Found advisory: {advisory.title}")
+            return True, advisory.title
+                
+    except Exception as e:
+        print(f"❌ Error getting advisory title: {str(e)}")
+        return False, f"Database error while getting advisory: {str(e)}"
+
+
+def get_farmer_id(phone_number):
+    """
+    Get farmer ID from database using phone number.
+    
+    Args:
+        phone_number (str): Farmer's phone number
+        
+    Returns:
+        tuple: (success, farmer_id_or_error)
+            - If success: (True, farmer_id)
+            - If failure: (False, "Error message")
+    """
+    try:
+        from ..models import Farmer
+        from flask import current_app
+        
+        print(f"🔍 Looking up farmer ID for phone: {phone_number}")
+        
+        with current_app.app_context():
+            # Query the database for farmer
+            farmer = Farmer.query.filter_by(phone=phone_number).first()
+            
+            if not farmer:
+                return False, f"No farmer found with phone number: {phone_number}"
+            
+            print(f"✅ Found farmer ID: {farmer.id}")
+            return True, farmer.id
+                
+    except Exception as e:
+        print(f"❌ Error getting farmer ID: {str(e)}")
+        return False, f"Database error while getting farmer: {str(e)}"
 

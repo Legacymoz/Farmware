@@ -1,4 +1,4 @@
-from flask import request, Blueprint
+from flask import request, Blueprint, jsonify
 from .SMS.utils import process_complete_advisory
 from .USSD.utils import verify_full_message
 import os
@@ -20,29 +20,28 @@ def send_advisory():
     try:
         data = request.get_json()
         
-        # Extract required fields
-        message_id = data.get('message_id')  # Advisory ID
-        title = data.get('title')
-        farmer_id = data.get('farmer_id')
-        secret_key = data.get('secret_key')
+        # Extract required fields from request
+        message_id = data.get('message_id')
         phone_number = data.get('phone_number')
         
-        # Basic validation - check if all required fields are present
-        if not all([message_id, title, farmer_id, secret_key, phone_number]):
-            return {
-                'error': 'Missing required fields',
-                'required': ['message_id', 'title', 'farmer_id', 'secret_key', 'phone_number']
-            }, 400
+        # Validate required fields
+        if not message_id or not phone_number:
+            return jsonify({
+                'success': False,
+                'error': 'Missing required fields: message_id and phone_number are required'
+            }), 400
         
-
-          # Process the complete advisory workflow with ONE function call
-        result = process_complete_advisory(message_id, title, secret_key, farmer_id, phone_number)
+        print(f"📨 Processing advisory request:")
+        print(f"   Message ID: {message_id}")
+        print(f"   Phone Number: {phone_number}")
         
-        # Return result
+        # Process the complete advisory workflow
+        result = process_complete_advisory(message_id, phone_number)
+        
         if result['success']:
-            return result, 200
+            return jsonify(result), 200
         else:
-            return result, 500
+            return jsonify(result), 400
             
     except Exception as e:
         return {'error': 'Invalid JSON data', 'message': str(e)}, 400

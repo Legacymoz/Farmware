@@ -223,9 +223,9 @@ def create_sample_farmers():
     print("👨‍🌾 Creating sample farmers...")
     
     farmers_data = [
-        ('+254712345678', 'FarmwareSecret2024'),
-        ('+254723456789', 'AnotherSecretKey123'),
-        ('+254734567890', 'ThirdFarmerKey456'),
+        ('+254798929952', 'FarmwareSecret2025'),
+        ('+254759216739', 'AnotherAwesomeKey1'),
+        ('+254110726703', 'ThirdFarmerKey456'),
     ]
     
     created_farmers = []

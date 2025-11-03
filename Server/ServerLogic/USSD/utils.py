@@ -21,6 +21,7 @@ def verify_full_message(phone_number, service_code, text):
         VC = text
     
     print(f"🔍 Extracted VC: {VC}")
+    print(f"🔍 Phone Number in verify full message: {phone_number}")
     
     #Step 2, Get the secret Key matching that Phone number from DB
     secret_key = get_secret_key_by_phone(phone_number)
