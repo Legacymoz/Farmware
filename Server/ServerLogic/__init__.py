@@ -19,8 +19,13 @@ def create_app():
     Returns:
         Flask: Configured Flask application instance
     """
+    server_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    
     # Create Flask app instance
-    app = Flask(__name__)
+    app = Flask(__name__, 
+                template_folder=os.path.join(server_dir, 'templates'),
+                static_folder=os.path.join(server_dir, 'static'))
+    
     
     # Basic configuration
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')

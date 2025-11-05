@@ -1,4 +1,5 @@
-from flask import request, Blueprint, jsonify
+from flask import request, Blueprint, jsonify, render_template
+from .models import Advisory, Farmer
 from .SMS.utils import process_complete_advisory
 from .USSD.utils import verify_full_message
 import os
@@ -168,3 +169,60 @@ def ussd_callback():
     except Exception as e:
         print(f"❌ Error in USSD callback: {e}")
         return "END Sorry, there was an error processing your request.", 200
+    
+
+
+@routes_bp.route('/')
+def dashboard():
+    """Render the main dashboard"""
+    return render_template('dashboard.html')
+
+@routes_bp.route('/api/farmers')
+def get_farmers_api():
+    """API endpoint to get farmers data"""
+    try:
+        farmers = Farmer.query.all()
+        farmers_data = []
+        
+        for farmer in farmers:
+            farmers_data.append({
+                'id': farmer.id,
+                'phone': farmer.phone,
+                'secret_key_preview': farmer.secret_key[:10].decode('utf-8', errors='ignore') + '...',
+                'created_at': farmer.created_at.isoformat() if farmer.created_at else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'farmers': farmers_data
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@routes_bp.route('/api/advisories')
+def get_advisories_api():
+    """API endpoint to get advisories data"""
+    try:
+        advisories = Advisory.query.all()
+        advisories_data = []
+        
+        for advisory in advisories:
+            advisories_data.append({
+                'id': advisory.id,
+                'title': advisory.title,
+                'message': advisory.message,
+                'created_at': advisory.created_at.isoformat() if advisory.created_at else None
+            })
+        
+        return jsonify({
+            'success': True,
+            'advisories': advisories_data
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
