@@ -1,7 +1,6 @@
 """
 Basic Flask application factory for Farmware Server.
 """
-
 from flask import Flask
 from flask_cors import CORS
 import os
